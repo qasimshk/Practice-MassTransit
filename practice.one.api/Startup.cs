@@ -12,7 +12,7 @@ using practice.one.component.Abstractions;
 using RabbitMQ.Client;
 using System;
 using System.Security.Authentication;
-//
+
 namespace practice.one.api
 {
     public class Startup
