@@ -50,8 +50,7 @@ namespace practice.one.api
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "practice.one.api", Version = "v1" });
             });
         }
-
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+        
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
