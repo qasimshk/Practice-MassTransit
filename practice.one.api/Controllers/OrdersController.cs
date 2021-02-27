@@ -15,10 +15,10 @@ namespace practice.one.api.Controllers
         private readonly IPublishEndpoint _publishEndpoint;
 
         public OrdersController(
-            //IRequestClient<ISubmitOrder> submitOrderClient, 
+            IRequestClient<ISubmitOrder> submitOrderClient, 
             IPublishEndpoint publishEndpoint)
         {
-            //_submitOrderClient = submitOrderClient;
+            _submitOrderClient = submitOrderClient;
             _publishEndpoint = publishEndpoint;
         }
 

@@ -5,13 +5,9 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using practice.one.api.Configurations;
 using practice.one.component.Abstractions;
-using RabbitMQ.Client;
-using System;
-using System.Security.Authentication;
 
 namespace practice.one.api
 {
