@@ -6,9 +6,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="GreenPipes" Version="4.0.0" />
     <PackageReference Include="MassTransit" Version="7.1.6" />
     <PackageReference Include="MassTransit.Extensions.DependencyInjection" Version="7.1.6" />
     <PackageReference Include="MassTransit.RabbitMQ" Version="7.1.6" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="5.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\practice.one.component\practice.one.component.csproj" />
   </ItemGroup>
 </Project>

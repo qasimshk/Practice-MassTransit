@@ -1,5 +1,6 @@
 using MassTransit;
 using MassTransit.MultiBus;
+using MassTransit.RabbitMqTransport;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -8,6 +9,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using practice.one.api.Configurations;
 using practice.one.component.Abstractions;
+using System;
 
 namespace practice.one.api
 {
@@ -19,7 +21,7 @@ namespace practice.one.api
         }
 
         public IConfiguration Configuration { get; }
-                        
+
         public void ConfigureServices(IServiceCollection services)
         {
             //services.Configure<AppConfig>(Configuration.GetSection("AppConfig"));
@@ -28,14 +30,29 @@ namespace practice.one.api
 
             services.AddMassTransit(cfg =>
             {
+                cfg.ApplyCustomMassTransitConfiguration();
+
+                //cfg.UsingRabbitMq((context, cfg) =>
+                //{
+                //    cfg.Host("amqp://cematix:Password123@cematixsrv:5672");
+
+                //    MessageDataDefaults.ExtraTimeToLive = TimeSpan.FromDays(1);
+                //    MessageDataDefaults.Threshold = 2000;
+                //    MessageDataDefaults.AlwaysWriteToRepository = false;
+                //});
+
+                cfg.AddRabbitMqMessageScheduler();
+                
+                cfg.UsingRabbitMq(ConfigureBus);
+
+                //cfg.AddBus(context => Bus.Factory.CreateUsingRabbitMq(cfg =>
+                //{
+                //    //cfg.Host(options.AMQPURL);
+                //    cfg.Host("amqp://cematix:Password123@cematixsrv:5672");
+                //    cfg.ConfigureEndpoints(context);
+                //}));
+
                 cfg.AddRequestClient<ISubmitOrder>();
-
-                cfg.AddBus(context => Bus.Factory.CreateUsingRabbitMq(cfg =>
-                {
-                    cfg.Host(options.AMQPURL);
-
-                    cfg.ConfigureEndpoints(context);
-                }));
             });
 
             services.AddMassTransitHostedService();
@@ -46,7 +63,7 @@ namespace practice.one.api
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "practice.one.api", Version = "v1" });
             });
         }
-        
+
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
@@ -66,6 +83,32 @@ namespace practice.one.api
             {
                 endpoints.MapControllers();
             });
-        }       
+        }
+
+        static void ConfigureBus(IBusRegistrationContext context, IRabbitMqBusFactoryConfigurator configurator)
+        {
+            //configurator.Host("amqp://cematix:Password123@cematixsrv:5672");
+            configurator.Host("");
+
+            //MessageDataDefaults.ExtraTimeToLive = TimeSpan.FromDays(1);
+            //MessageDataDefaults.Threshold = 2000;
+            //MessageDataDefaults.AlwaysWriteToRepository = false;
+            
+            /*
+            "RabbitMQ": {
+                "Host": "rabbitmq://192.168.160.131/",
+                "Username": "test",
+                "Password": "1"
+            },
+            configurator.Host(new Uri(""), host =>
+            {
+                host.Username("");
+                host.Password("");
+
+
+            });
+            */
+            configurator.ConfigureEndpoints(context);
+        }
     }
 }
