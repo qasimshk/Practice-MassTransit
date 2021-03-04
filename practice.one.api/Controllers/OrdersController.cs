@@ -5,6 +5,7 @@ using practice.one.api.Models;
 using practice.one.component.Abstractions;
 using practice.one.component.Activities;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace practice.one.api.Controllers
@@ -13,13 +14,15 @@ namespace practice.one.api.Controllers
     [ApiController]
     public class OrdersController : Controller
     {
+        private readonly IRequestClient<OrderFry> _orderFryClient;
         private readonly IRequestClient<ISubmitOrder> _submitOrderClient;
         private readonly IPublishEndpoint _publishEndpoint;
         private readonly IBus _bus;
         readonly Uri _processingOrderCancel;
 
-        public OrdersController(IRequestClient<ISubmitOrder> submitOrderClient, IPublishEndpoint publishEndpoint, IBus bus, IEndpointNameFormatter formatter)
+        public OrdersController(IRequestClient<OrderFry> OrderFryClient, IRequestClient<ISubmitOrder> submitOrderClient, IPublishEndpoint publishEndpoint, IBus bus, IEndpointNameFormatter formatter)
         {
+            _orderFryClient = OrderFryClient;
             _submitOrderClient = submitOrderClient;
             _publishEndpoint = publishEndpoint;
             _bus = bus;
@@ -88,6 +91,44 @@ namespace practice.one.api.Controllers
             }
         }
 
+        [HttpPost("SagaOrder")]
+        public async Task<IActionResult> SagaOrder([FromBody] SagaeOrderRequest request)
+        {
+            Response response = await _orderFryClient.GetResponse<OrderFryCompleted, OrderFaulted>(request);
+
+            return response switch
+            {
+                (_, OrderFryCompleted completed) => Ok(new
+                {
+                    completed.OrderId,
+                    completed.Created,
+                    completed.Completed, 
+
+                    completed.OrderRefrence,
+                    completed.ProductName,
+                    completed.Quantity
+                }),
+                (_, OrderFaulted faulted) => BadRequest(new
+                {
+                    faulted.OrderId,
+                    faulted.Created,
+                    faulted.Faulted,
+                    LinesCompleted = faulted.LinesCompleted.ToDictionary(x => x.Key, x => new
+                    {
+                        x.Value.Created,
+                        x.Value.Completed,
+                        x.Value.Description,
+                    }),
+                    LinesFaulted = faulted.LinesFaulted.ToDictionary(x => x.Key, x => new
+                    {
+                        Faulted = x.Value.Timestamp,
+                        Reason = x.Value.GetExceptionMessages(),
+                    })
+                }),
+                _ => BadRequest()
+            };
+        }
+
         [HttpPost("Submit")]
         public async Task<IActionResult> SubmitOrder([FromBody] SubmitOrder request)
         {
@@ -130,5 +171,24 @@ namespace practice.one.api.Controllers
         }
     }
 
+    public class SagaeOrderRequest : OrderFry
+    {
+        public Guid OrderRefrence { get; set; }
 
+        public string ProductName { get; set; }
+
+        public int Quantity { get; set; }
+
+        public Guid OrderId { get; set; }
+
+        public Guid OrderLineId { get; set; }
+    }
+
+    public static class FutureContractExtensions
+    {
+        public static string GetExceptionMessages(this Fault faulted)
+        {
+            return faulted.Exceptions != null ? string.Join(Environment.NewLine, faulted.Exceptions.Select(x => x.Message)) : string.Empty;
+        }
+    }
 }

@@ -9,7 +9,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using practice.one.api.Configurations;
 using practice.one.component.Abstractions;
-using System;
 
 namespace practice.one.api
 {
@@ -53,6 +52,7 @@ namespace practice.one.api
                 //}));
 
                 cfg.AddRequestClient<ISubmitOrder>();
+                cfg.AddRequestClient<OrderFry>();
             });
 
             services.AddMassTransitHostedService();
