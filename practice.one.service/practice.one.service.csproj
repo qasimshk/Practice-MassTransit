@@ -6,6 +6,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Migrations\20210304231111_InitialCreate.cs" />
+    <Compile Remove="Migrations\20210304231111_InitialCreate.Designer.cs" />
+    <Compile Remove="Migrations\PracticeOneSagaDbContextModelSnapshot.cs" />
+    <Compile Remove="Persistance\FutureStateMap.cs" />
+    <Compile Remove="Persistance\PracticeOneSagaDbContext.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="GreenPipes" Version="4.0.0" />
     <PackageReference Include="MassTransit" Version="7.2.0-develop.3323" />
     <PackageReference Include="MassTransit.Analyzers" Version="7.2.0-develop.3323" />

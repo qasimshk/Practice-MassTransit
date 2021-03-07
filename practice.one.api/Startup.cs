@@ -1,13 +1,13 @@
 using MassTransit;
-using MassTransit.MultiBus;
+using MassTransit.Definition;
 using MassTransit.RabbitMqTransport;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
-using practice.one.api.Configurations;
 using practice.one.component.Abstractions;
 
 namespace practice.one.api
@@ -22,37 +22,20 @@ namespace practice.one.api
         public IConfiguration Configuration { get; }
 
         public void ConfigureServices(IServiceCollection services)
-        {
-            //services.Configure<AppConfig>(Configuration.GetSection("AppConfig"));
-
-            var options = Configuration.GetSection(nameof(AppConfig)).Get<AppConfig>();
+        {   
+            services.TryAddSingleton(KebabCaseEndpointNameFormatter.Instance);
 
             services.AddMassTransit(cfg =>
             {
                 cfg.ApplyCustomMassTransitConfiguration();
 
-                //cfg.UsingRabbitMq((context, cfg) =>
-                //{
-                //    cfg.Host("amqp://cematix:Password123@cematixsrv:5672");
+                cfg.SetKebabCaseEndpointNameFormatter();
 
-                //    MessageDataDefaults.ExtraTimeToLive = TimeSpan.FromDays(1);
-                //    MessageDataDefaults.Threshold = 2000;
-                //    MessageDataDefaults.AlwaysWriteToRepository = false;
-                //});
-
-                cfg.AddRabbitMqMessageScheduler();
-                
                 cfg.UsingRabbitMq(ConfigureBus);
-
-                //cfg.AddBus(context => Bus.Factory.CreateUsingRabbitMq(cfg =>
-                //{
-                //    //cfg.Host(options.AMQPURL);
-                //    cfg.Host("amqp://cematix:Password123@cematixsrv:5672");
-                //    cfg.ConfigureEndpoints(context);
-                //}));
-
+                
                 cfg.AddRequestClient<ISubmitOrder>();
-                cfg.AddRequestClient<OrderFry>();
+                
+                cfg.AddRequestClient<IRegisterMember>();
             });
 
             services.AddMassTransitHostedService();
@@ -89,25 +72,6 @@ namespace practice.one.api
         {
             //configurator.Host("amqp://cematix:Password123@cematixsrv:5672");
             configurator.Host("");
-
-            //MessageDataDefaults.ExtraTimeToLive = TimeSpan.FromDays(1);
-            //MessageDataDefaults.Threshold = 2000;
-            //MessageDataDefaults.AlwaysWriteToRepository = false;
-            
-            /*
-            "RabbitMQ": {
-                "Host": "rabbitmq://192.168.160.131/",
-                "Username": "test",
-                "Password": "1"
-            },
-            configurator.Host(new Uri(""), host =>
-            {
-                host.Username("");
-                host.Password("");
-
-
-            });
-            */
             configurator.ConfigureEndpoints(context);
         }
     }

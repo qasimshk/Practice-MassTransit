@@ -14,20 +14,26 @@ namespace practice.one.api.Controllers
     [ApiController]
     public class OrdersController : Controller
     {
-        private readonly IRequestClient<OrderFry> _orderFryClient;
         private readonly IRequestClient<ISubmitOrder> _submitOrderClient;
         private readonly IPublishEndpoint _publishEndpoint;
         private readonly IBus _bus;
-        readonly Uri _processingOrderCancel;
 
-        public OrdersController(IRequestClient<OrderFry> OrderFryClient, IRequestClient<ISubmitOrder> submitOrderClient, IPublishEndpoint publishEndpoint, IBus bus, IEndpointNameFormatter formatter)
+        public OrdersController(
+            IRequestClient<ISubmitOrder> submitOrderClient,
+            IPublishEndpoint publishEndpoint,
+            IBus bus)
         {
-            _orderFryClient = OrderFryClient;
             _submitOrderClient = submitOrderClient;
             _publishEndpoint = publishEndpoint;
             _bus = bus;
+        }
 
-            _processingOrderCancel = new Uri($"queue:{formatter.ExecuteActivity<ProcessingOrderCancelActivity, OrderCancelledArguements>()}");
+        [HttpPost("CreateMember")]
+        public async Task<IActionResult> CreateMember([FromBody] CreateMember request)
+        {
+            await _publishEndpoint.Publish<IRegisterMember>(request);
+
+            return Ok();
         }
 
         [HttpPost("Notification")]
@@ -36,9 +42,7 @@ namespace practice.one.api.Controllers
             try
             {
                 await _publishEndpoint.Publish<IMessageNotify>(notify);
-
-                //wait _bus.Publish(notify);
-
+                
                 return Ok("Message Send");
             }
             catch (Exception ex)
@@ -91,6 +95,7 @@ namespace practice.one.api.Controllers
             }
         }
 
+        /*
         [HttpPost("SagaOrder")]
         public async Task<IActionResult> SagaOrder([FromBody] SagaeOrderRequest request)
         {
@@ -102,7 +107,7 @@ namespace practice.one.api.Controllers
                 {
                     completed.OrderId,
                     completed.Created,
-                    completed.Completed, 
+                    completed.Completed,
 
                     completed.OrderRefrence,
                     completed.ProductName,
@@ -128,6 +133,7 @@ namespace practice.one.api.Controllers
                 _ => BadRequest()
             };
         }
+        */
 
         [HttpPost("Submit")]
         public async Task<IActionResult> SubmitOrder([FromBody] SubmitOrder request)
@@ -144,51 +150,16 @@ namespace practice.one.api.Controllers
                 return Accepted("Order Submitted successfuly");
             }
 
-            //if (accepted.IsCompleted)
-            //{
-            //    var result = await accepted;
+            var response = await rejected;
 
-            //    return Ok("Order Submitted successfuly");
-            //}
-            else
-            {
-                var response = await rejected;
-
-                return BadRequest(response.Message);
-            }
+            return BadRequest(response.Message);
         }
     }
 
-    public class PaymentReturn
+    public class CreateMember : IRegisterMember
     {
-        public Guid OrderId { get; }
-        public int Amouunt { get; }
-
-        public PaymentReturn(Guid orderId, int amouunt)
-        {
-            OrderId = orderId;
-            Amouunt = amouunt;
-        }
-    }
-
-    public class SagaeOrderRequest : OrderFry
-    {
-        public Guid OrderRefrence { get; set; }
-
-        public string ProductName { get; set; }
-
-        public int Quantity { get; set; }
-
-        public Guid OrderId { get; set; }
-
-        public Guid OrderLineId { get; set; }
-    }
-
-    public static class FutureContractExtensions
-    {
-        public static string GetExceptionMessages(this Fault faulted)
-        {
-            return faulted.Exceptions != null ? string.Join(Environment.NewLine, faulted.Exceptions.Select(x => x.Message)) : string.Empty;
-        }
+        public Guid MemberId { get; set; }
+        public string Name { get; set; }
+        public string EmailAddress { get; set; }
     }
 }
